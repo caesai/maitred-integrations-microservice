@@ -15,6 +15,7 @@ export interface RemarkedSlot {
   tables_count?: number;
   tables_ids?: number[];
   table_bundles?: any[];
+  isEvent: boolean; // New field
 }
 
 export interface RemarkedCustomer {

@@ -103,7 +103,7 @@ class RemarkedService {
         return [];
       }
       
-      const slots: RemarkedSlot[] = json_resp.slots as RemarkedSlot[];
+      const slots: RemarkedSlot[] = (json_resp.slots as RemarkedSlot[]).map(slot => ({ ...slot, isEvent: false }));
       return slots.filter(slot => slot.is_free);
     } catch (error: any) {
       console.error('Error in RemarkedService.getSlots:', error.message);
@@ -119,10 +119,11 @@ class RemarkedService {
       token: token,
       reserve_id: payload.reserve_id,
       status: payload.status || "canceled",
-      cancel_reason: payload.cancel_reason,
+      cancel_reason: payload.cancel_reason || "", // Ensure cancel_reason is always a string
       request_id: request_id
     };
 
+    console.log('Sending removeReserve payload to Remarked API:', fullPayload);
     try {
       const response = await fetch(this.remarkedApiUrl, {
         method: 'POST',
@@ -133,6 +134,7 @@ class RemarkedService {
       });
 
       const json_resp: any = await response.json();
+      console.log('Received removeReserve response from Remarked API:', json_resp);
       if (json_resp.status === 'error') {
         console.error('RemoveReserve error:', json_resp);
         return false;
