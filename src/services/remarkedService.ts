@@ -22,22 +22,22 @@ class RemarkedService {
     this.remarkedApiV2BookingUrl = remarkedApiV2BookingUrl;
   }
 
-  private getToken(restaurantId?: number): string {
-    const id = restaurantId || config.defaultRestaurantId;
+  private getToken(restaurant_id?: number): string {
+    const id = restaurant_id || config.defaultRestaurantId;
     const token = config.remarkedTokens[id];
     if (!token) {
-      throw new Error(`Remarked API token not found for restaurantId: ${id}`);
+      throw new Error(`Remarked API token not found for restaurant_id: ${id}`);
     }
     return token;
   }
 
   public async createReserve(payload: Omit<CreateReservePayload, 'table_ids'>): Promise<CreateReserveResponse | false> {
     const request_id = uuidv4();
-    const token = this.getToken(payload.restaurantId);
+    const token = this.getToken(payload.restaurant_id);
 
     // 1. Get available slots for the given date, time, and guests_count
     const slotsPayload: GetSlotsPayload = {
-      restaurantId: payload.restaurantId,
+      restaurant_id: payload.restaurant_id,
       reserve_from: payload.date,
       reserve_to: payload.date,
       guests_count: payload.guests_count,
@@ -100,7 +100,7 @@ class RemarkedService {
   }
 
   public async getSlots(payload: GetSlotsPayload): Promise<RemarkedSlot[]> {
-    const token = this.getToken(payload.restaurantId);
+    const token = this.getToken(payload.restaurant_id);
     const fullPayload = {
       method: 'GetSlots',
       token: token, 
@@ -139,7 +139,7 @@ class RemarkedService {
 
   public async removeReserve(payload: RemoveReservePayload): Promise<RemoveReserveResponse | false> {
     const request_id = uuidv4();
-    const token = this.getToken(payload.restaurantId);
+    const token = this.getToken(payload.restaurant_id);
     const fullPayload = {
       method: 'ChangeReserveStatus',
       token: token,
@@ -177,7 +177,7 @@ class RemarkedService {
   }
 
   public async buyTicket(payload: BuyTicketPayload): Promise<BuyTicketResponse | []> {
-    const token = this.getToken(payload.restaurantId);
+    const token = this.getToken(payload.restaurant_id);
     try {
       const response = await fetch(`${this.remarkedApiV2BookingUrl}/holdTickets`, {
         method: 'POST',
@@ -201,7 +201,7 @@ class RemarkedService {
   }
 
   public async checkPayment(payload: CheckPaymentPayload): Promise<CheckPaymentResponse | null> {
-    const token = this.getToken(payload.restaurantId);
+    const token = this.getToken(payload.restaurant_id);
     try {
       const response = await fetch(`${this.remarkedApiV2BookingUrl}/checkPaid`, {
         method: 'POST',

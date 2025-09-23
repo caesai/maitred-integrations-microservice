@@ -1,5 +1,5 @@
 export interface GetSlotsPayload {
-  restaurantId?: number; // Make optional as it can be defaulted
+  restaurant_id?: number; // Make optional as it can be defaulted
   reserve_from: string;
   reserve_to: string;
   guests_count: number;
@@ -26,7 +26,7 @@ export interface RemarkedCustomer {
 }
 
 export interface CreateReservePayload {
-  restaurantId?: number;
+  restaurant_id?: number;
   name: string;
   phone: string;
   email: string;
@@ -49,7 +49,7 @@ export interface CreateReserveResponse {
 }
 
 export interface RemoveReservePayload {
-  restaurantId?: number;
+  restaurant_id?: number;
   reserve_id: number;
   cancel_reason?: string;
   status?: string;
@@ -61,7 +61,7 @@ export interface RemoveReserveResponse {
 }
 
 export interface BuyTicketPayload {
-  restaurantId?: number;
+  restaurant_id?: number;
   event_id: number;
   customer: RemarkedCustomer;
   comment: string;
@@ -74,7 +74,7 @@ export interface BuyTicketResponse {
 }
 
 export interface CheckPaymentPayload {
-  restaurantId?: number;
+  restaurant_id?: number;
   transaction_guid: string;
 }
 
