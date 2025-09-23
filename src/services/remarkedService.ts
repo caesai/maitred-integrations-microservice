@@ -49,13 +49,20 @@ class RemarkedService {
       return false;
     }
 
-    // Use the first available table_ids from the first available slot
-    const firstAvailableSlot = availableSlots[0];
-    if (!firstAvailableSlot.tables_ids || firstAvailableSlot.tables_ids.length === 0) {
-      console.error('First available slot has no tables_ids.');
+    let selectedTableId: number | undefined;
+    for (const slot of availableSlots) {
+      if (slot.tables_ids && slot.tables_ids.length > 0) {
+        selectedTableId = slot.tables_ids[0];
+        break; // Found a slot with table_ids, break the loop
+      }
+    }
+
+    if (selectedTableId === undefined) {
+      console.error('No available slot with specific tables_ids found for booking.');
       return false;
     }
-    const table_ids_to_book = [firstAvailableSlot.tables_ids[0]]; // Take the first table ID
+
+    const table_ids_to_book = [selectedTableId]; // Take the first table ID from the selected slot
 
     const fullPayload = {
       method: 'CreateReserve',
