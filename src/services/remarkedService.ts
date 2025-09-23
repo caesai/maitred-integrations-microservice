@@ -31,14 +31,38 @@ class RemarkedService {
     return token;
   }
 
-  public async createReserve(payload: CreateReservePayload): Promise<CreateReserveResponse | false> {
+  public async createReserve(payload: Omit<CreateReservePayload, 'table_ids'>): Promise<CreateReserveResponse | false> {
     const request_id = uuidv4();
     const token = this.getToken(payload.restaurantId);
+
+    // 1. Get available slots for the given date, time, and guests_count
+    const slotsPayload: GetSlotsPayload = {
+      restaurantId: payload.restaurantId,
+      reserve_from: payload.date,
+      reserve_to: payload.date,
+      guests_count: payload.guests_count,
+    };
+    const availableSlots = await this.getSlots(slotsPayload);
+
+    if (availableSlots.length === 0) {
+      console.error('No available slots found for the specified criteria.');
+      return false;
+    }
+
+    // Use the first available table_ids from the first available slot
+    const firstAvailableSlot = availableSlots[0];
+    if (!firstAvailableSlot.tables_ids || firstAvailableSlot.tables_ids.length === 0) {
+      console.error('First available slot has no tables_ids.');
+      return false;
+    }
+    const table_ids_to_book = [firstAvailableSlot.tables_ids[0]]; // Take the first table ID
+
     const fullPayload = {
       method: 'CreateReserve',
       token: token, 
       reserve: {
         ...payload,
+        table_ids: table_ids_to_book, // Add table_ids here
         source: "tma",
         deposit_sum: payload.deposit_sum || 0.0,
         deposit_status: payload.deposit_status || 'unpaid',
@@ -47,6 +71,7 @@ class RemarkedService {
       request_id,
     };
 
+    console.log('Sending createReserve payload to Remarked API:', fullPayload);
     try {
       const response = await fetch(this.remarkedApiUrl, {
         method: 'POST',
@@ -57,6 +82,7 @@ class RemarkedService {
       });
 
       const json_resp: any = await response.json();
+      console.log('Received createReserve response from Remarked API:', json_resp);
 
       if (json_resp.status === 'success') {
         return {

@@ -9,7 +9,7 @@ import {
 } from '../interfaces/booking';
 
 class BookingController {
-  public async createReserve(request: FastifyRequest<{ Body: CreateReservePayload }>, reply: FastifyReply): Promise<void> {
+  public async createReserve(request: FastifyRequest<{ Body: Omit<CreateReservePayload, 'table_ids'> }>, reply: FastifyReply): Promise<void> {
     try {
       const result = await remarkedService.createReserve(request.body);
       if (result) {

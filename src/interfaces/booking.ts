@@ -40,7 +40,6 @@ export interface CreateReservePayload {
   comment: string;
   type?: string;
   source?: string;
-  table_ids: number[];
   event_tags: number[];
 }
 
