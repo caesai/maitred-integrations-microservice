@@ -95,6 +95,7 @@ class RemarkedService {
         return {
           request_id: request_id,
           reserve_id: json_resp.reserve_id as number,
+          table_ids: table_ids_to_book,
         };
       } else {
         console.error('Error in RemarkedService.createReserve:', json_resp);

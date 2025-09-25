@@ -46,6 +46,7 @@ export interface CreateReservePayload {
 export interface CreateReserveResponse {
   request_id: string;
   reserve_id: number;
+  table_ids?: number[]; // Добавляем необязательное поле table_ids
 }
 
 export interface RemoveReservePayload {
