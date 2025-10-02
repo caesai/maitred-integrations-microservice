@@ -9,6 +9,7 @@ interface Config {
   remarkedTokens: Record<number, string>; // Dictionary to store tokens by restaurantId
   remarkedApiV2BookingUrl: string;
   defaultRestaurantId: number;
+  remarkedEventToken: string; // Добавляем новый токен для мероприятий
 }
 
 const remarkedTokens: Record<number, string> = {};
@@ -42,6 +43,7 @@ const config: Config = {
   remarkedTokens: remarkedTokens,
   remarkedApiV2BookingUrl: process.env.REMARKED_API_V2_BOOKING_URL || 'https://app.remarked.ru/api/v2/eventBooking',
   defaultRestaurantId: parseInt(process.env.DEFAULT_RESTAURANT_ID || '12', 10),
+  remarkedEventToken: process.env.REMARKED_BOOKING_TOKEN_12 || 'your_remarked_event_token', // Инициализируем токен мероприятий
 };
 
 export default config;

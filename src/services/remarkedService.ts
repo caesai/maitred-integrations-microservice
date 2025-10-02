@@ -10,23 +10,46 @@ import {
   BuyTicketPayload,
   BuyTicketResponse,
   CheckPaymentPayload,
-  CheckPaymentResponse
+  CheckPaymentResponse,
+  GetSlotsResponse,
+  GetEventsPayload,      // Новый импорт
+  RemarkedEvent,         // Новый импорт
+  GetEventsResponse,     // Новый импорт
+  HoldTicketsPayload,    // Новый импорт
+  HoldTicketsResponse    // Новый импорт
 } from '../interfaces/booking';
 
 class RemarkedService {
   private remarkedApiUrl: string;
   private remarkedApiV2BookingUrl: string;
+  // private remarkedApiV2EventUrl: string; // Удаляем это, так как будем использовать remarkedApiV2BookingUrl
 
   constructor(remarkedApiUrl: string, remarkedApiV2BookingUrl: string) {
     this.remarkedApiUrl = remarkedApiUrl;
     this.remarkedApiV2BookingUrl = remarkedApiV2BookingUrl;
+    // this.remarkedApiV2EventUrl = `${remarkedApiV2BookingUrl}`; // Удаляем это
   }
 
-  private getToken(restaurant_id?: number): string {
-    const id = restaurant_id || config.defaultRestaurantId;
-    const token = config.remarkedTokens[id];
+  private getToken(restaurant_id?: number, isEvent: boolean = false): string {
+    const targetRestaurantId = restaurant_id || config.defaultRestaurantId;
+
+    if (isEvent) {
+      if (targetRestaurantId === 12) { // Если это мероприятие и restaurant_id = 12
+        if (!config.remarkedEventToken) {
+          throw new Error('Remarked event API token not found for restaurant_id 12.');
+        }
+        return config.remarkedEventToken;
+      } else {
+        // Заглушка для других restaurant_id при isEvent: true
+        console.warn(`Использование заглушки токена для мероприятий для restaurant_id: ${targetRestaurantId}.`);
+        return 'dummy_event_token_for_other_restaurants';
+      }
+    }
+
+    // Существующая логика для не-мероприятий
+    const token = config.remarkedTokens[targetRestaurantId];
     if (!token) {
-      throw new Error(`Remarked API token not found for restaurant_id: ${id}`);
+      throw new Error(`Remarked API token not found for restaurant_id: ${targetRestaurantId}`);
     }
     return token;
   }
@@ -41,8 +64,20 @@ class RemarkedService {
       reserve_from: payload.date,
       reserve_to: payload.date,
       guests_count: payload.guests_count,
+      with_rooms: false, // Устанавливаем в false, так как для бронирования нужны только слоты
     };
-    const availableSlots = await this.getSlots(slotsPayload);
+    const slotsResult = await this.getSlots(slotsPayload);
+
+    let availableSlots: RemarkedSlot[];
+
+    if (Array.isArray(slotsResult)) {
+      availableSlots = slotsResult;
+    } else if (slotsResult && slotsResult.slots) {
+      availableSlots = slotsResult.slots;
+    } else {
+      console.error('Неверный формат ответа от getSlots.');
+      return false;
+    }
 
     if (availableSlots.length === 0) {
       console.error('No available slots found for the specified criteria.');
@@ -78,7 +113,6 @@ class RemarkedService {
       request_id,
     };
 
-    console.log('Sending createReserve payload to Remarked API:', fullPayload);
     try {
       const response = await fetch(this.remarkedApiUrl, {
         method: 'POST',
@@ -89,13 +123,12 @@ class RemarkedService {
       });
 
       const json_resp: any = await response.json();
-      console.log('Received createReserve response from Remarked API:', json_resp);
 
       if (json_resp.status === 'success') {
         return {
           request_id: request_id,
           reserve_id: json_resp.reserve_id as number,
-          table_ids: table_ids_to_book,
+          table_ids: table_ids_to_book, // Добавляем table_ids
         };
       } else {
         console.error('Error in RemarkedService.createReserve:', json_resp);
@@ -107,11 +140,11 @@ class RemarkedService {
     }
   }
 
-  public async getSlots(payload: GetSlotsPayload): Promise<RemarkedSlot[]> {
+  public async getSlots(payload: GetSlotsPayload): Promise<RemarkedSlot[] | GetSlotsResponse> {
     const token = this.getToken(payload.restaurant_id);
-    const fullPayload = {
+    const fullPayload: any = {
       method: 'GetSlots',
-      token: token, 
+      token: token,
       reserve_date_period: {
         from: payload.reserve_from,
         to: payload.reserve_to,
@@ -119,7 +152,10 @@ class RemarkedService {
       guests_count: String(payload.guests_count),
     };
 
-    console.log('Sending payload to Remarked API:', fullPayload);
+    if (payload.with_rooms) {
+      fullPayload.with_rooms = true;
+    }
+
     try {
       const response = await fetch(this.remarkedApiUrl, {
         method: 'POST',
@@ -129,16 +165,21 @@ class RemarkedService {
         body: JSON.stringify(fullPayload),
       });
 
-      const json_resp: any = await response.json();
-      console.log('Received response from Remarked API:', json_resp);
+      const json_resp = await response.json() as GetSlotsResponse;
 
       if (json_resp.status === 'error') {
         console.error('Error in RemarkedService.getSlots:', json_resp);
-        return [];
+        return []; // Возвращаем пустой массив слотов при ошибке
       }
       
-      const slots: RemarkedSlot[] = (json_resp.slots as RemarkedSlot[]).map(slot => ({ ...slot, isEvent: false }));
-      return slots.filter(slot => slot.is_free);
+      // Если with_rooms был запрошен, возвращаем полный объект GetSlotsResponse
+      if (payload.with_rooms) {
+        return json_resp;
+      } else {
+        // В противном случае, возвращаем только отфильтрованные свободные слоты
+        const slots: RemarkedSlot[] = (json_resp.slots as RemarkedSlot[]).map(slot => ({ ...slot, isEvent: false }));
+        return slots.filter(slot => slot.is_free);
+      }
     } catch (error: any) {
       console.error('Error in RemarkedService.getSlots:', error.message);
       throw error;
@@ -157,7 +198,6 @@ class RemarkedService {
       request_id: request_id
     };
 
-    console.log('Sending removeReserve payload to Remarked API:', fullPayload);
     try {
       const response = await fetch(this.remarkedApiUrl, {
         method: 'POST',
@@ -168,7 +208,6 @@ class RemarkedService {
       });
 
       const json_resp: any = await response.json();
-      console.log('Received removeReserve response from Remarked API:', json_resp);
       if (json_resp.status === 'error') {
         console.error('RemoveReserve error:', json_resp);
         return false;
@@ -197,7 +236,6 @@ class RemarkedService {
       });
 
       const json_resp = await response.json() as BuyTicketResponse;
-      console.log(json_resp);
       if (response.status !== 200) {
         return [];
       }
@@ -221,13 +259,59 @@ class RemarkedService {
       });
 
       const json_resp = await response.json() as CheckPaymentResponse;
-      console.log(json_resp);
       if (response.status !== 200) {
         return null;
       }
       return json_resp;
     } catch (error: any) {
       console.error('Error in RemarkedService.checkPayment:', error.message);
+      throw error;
+    }
+  }
+
+  public async getEvents(payload: GetEventsPayload, restaurant_id?: number): Promise<RemarkedEvent[] | false> {
+    const token = this.getToken(restaurant_id, true); // Передаем true для isEvent
+    try {
+      const response = await fetch(`${this.remarkedApiV2BookingUrl}/periodEvents?from=${payload.from}&to=${payload.to}`, { // Используем remarkedApiV2BookingUrl
+        method: 'GET', // GET запрос для мероприятий
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`, // Авторизация через токен мероприятий
+        },
+      });
+
+      const json_resp = await response.json() as GetEventsResponse;
+      if (response.status !== 200 || json_resp.events === undefined) {
+        console.error('Error in RemarkedService.getEvents:', json_resp);
+        return false;
+      }
+      return json_resp.events;
+    } catch (error: any) {
+      console.error('Error in RemarkedService.getEvents:', error.message);
+      throw error;
+    }
+  }
+
+  public async holdTickets(payload: HoldTicketsPayload): Promise<HoldTicketsResponse | false> {
+    const token = this.getToken(payload.restaurant_id, true); // Передаем true для isEvent
+    try {
+      const response = await fetch(`${this.remarkedApiV2BookingUrl}/holdTickets`, { // Используем remarkedApiV2BookingUrl
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json_resp = await response.json() as HoldTicketsResponse;
+      if (response.status !== 200) {
+        console.error('Error in RemarkedService.holdTickets:', json_resp);
+        return false;
+      }
+      return json_resp;
+    } catch (error: any) {
+      console.error('Error in RemarkedService.holdTickets:', error.message);
       throw error;
     }
   }

@@ -3,6 +3,24 @@ export interface GetSlotsPayload {
   reserve_from: string;
   reserve_to: string;
   guests_count: number;
+  with_rooms?: boolean; // Добавляем новый параметр
+}
+
+export interface RemarkedTable {
+  id: number;
+  capacity: number;
+  min_capacity: number | null;
+  max_capacity: number | null;
+  room_id: number;
+  image_url: string;
+  description: string;
+  name: string;
+}
+
+export interface RemarkedRoom {
+  id: number;
+  name: string;
+  tables: Record<string, RemarkedTable>;
 }
 
 export interface RemarkedSlot {
@@ -81,4 +99,53 @@ export interface CheckPaymentPayload {
 
 export interface CheckPaymentResponse {
   [key: string]: any;
+}
+
+export interface GetSlotsResponse {
+  status: string;
+  slots: RemarkedSlot[];
+  rooms?: Record<string, RemarkedRoom>;
+  interiors?: any; // Может быть null или другим типом
+}
+
+export interface GetEventsPayload {
+  from: string;
+  to: string;
+}
+
+export interface RemarkedEvent {
+  id: number;
+  name: string;
+  description: string;
+  date_start: string;
+  date_end: string;
+  ticket_price: number;
+  info_url: string;
+  free_tickets_quantity: number;
+  image_url: string;
+  group_id: number;
+  additional_info: any | null;
+}
+
+export interface GetEventsResponse {
+  events: RemarkedEvent[];
+}
+
+export interface HoldTicketsPayload {
+  restaurant_id?: number;
+  event_id: number;
+  customer: { // Используем существующий интерфейс RemarkedCustomer, если это возможно, или создаем новый
+    name: string;
+    surname: string;
+    phone: string;
+    email: string;
+  };
+  comment: string;
+  tickets_quantity: number;
+}
+
+export interface HoldTicketsResponse {
+  status: string;
+  order_id: string;
+  paymentURL: string;
 }

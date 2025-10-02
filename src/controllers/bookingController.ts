@@ -5,7 +5,9 @@ import {
   GetSlotsPayload,
   RemoveReservePayload,
   BuyTicketPayload,
-  CheckPaymentPayload
+  CheckPaymentPayload,
+  GetSlotsResponse,
+  RemarkedSlot // Добавляем импорт RemarkedSlot
 } from '../interfaces/booking';
 
 class BookingController {
@@ -25,8 +27,13 @@ class BookingController {
 
   public async getSlots(request: FastifyRequest<{ Body: GetSlotsPayload }>, reply: FastifyReply): Promise<void> {
     try {
-      const slots = await remarkedService.getSlots(request.body);
-      reply.send(slots);
+      const slotsResult = await remarkedService.getSlots(request.body);
+      // Определяем, был ли запрошен with_rooms, чтобы понять, какой тип ответа ожидать
+      if (request.body.with_rooms) {
+        reply.send(slotsResult as GetSlotsResponse);
+      } else {
+        reply.send(slotsResult as RemarkedSlot[]);
+      }
     } catch (error: any) {
       request.log.error(error);
       reply.status(500).send({ message: error.message });
