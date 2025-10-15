@@ -10,6 +10,8 @@ interface Config {
   remarkedApiV2BookingUrl: string;
   defaultRestaurantId: number;
   remarkedEventToken: string; // Добавляем новый токен для мероприятий
+  rocketDataApiUrl: string; // New RocketData API URL
+  rocketDataToken: string; // New RocketData API Token
 }
 
 const remarkedTokens: Record<number, string> = {};
@@ -44,6 +46,8 @@ const config: Config = {
   remarkedApiV2BookingUrl: process.env.REMARKED_API_V2_BOOKING_URL || 'https://app.remarked.ru/api/v2/eventBooking',
   defaultRestaurantId: parseInt(process.env.DEFAULT_RESTAURANT_ID || '12', 10),
   remarkedEventToken: process.env.REMARKED_BOOKING_TOKEN_12 || 'your_remarked_event_token', // Инициализируем токен мероприятий
+  rocketDataApiUrl: process.env.ROCKETDATA_API_URL || 'https://api.rocketdata.io',
+  rocketDataToken: process.env.ROCKETDATA_API_KEY || 'your_rocketdata_api_key',
 };
 
 export default config;

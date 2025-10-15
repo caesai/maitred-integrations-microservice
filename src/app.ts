@@ -1,15 +1,15 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import config from './config';
-import bookingRoutes from './routes/bookingRoutes';
-import eventRoutes from './routes/eventRoutes';
+import remarkedRoutes from './routes/remarkedRoutes';
+import rocketDataRoutes from './routes/rocketDataRoutes';
 
 async function buildApp(): Promise<FastifyInstance> {
   const fastify: FastifyInstance = Fastify({
     logger: true,
   });
 
-  fastify.register(bookingRoutes, { prefix: '/api' });
-  fastify.register(eventRoutes, { prefix: '/api' });
+  fastify.register(remarkedRoutes, { prefix: '/api' });
+  fastify.register(rocketDataRoutes, { prefix: '/api/rocketdata' });
 
   return fastify;
 }
