@@ -12,6 +12,8 @@ interface Config {
   remarkedEventToken: string; // Добавляем новый токен для мероприятий
   rocketDataApiUrl: string; // New RocketData API URL
   rocketDataToken: string; // New RocketData API Token
+  iikoApiUrl: string; // New iiko API URL
+  iikoToken: string; // New iiko API Login Token
 }
 
 const remarkedTokens: Record<number, string> = {};
@@ -48,6 +50,8 @@ const config: Config = {
   remarkedEventToken: process.env.REMARKED_BOOKING_TOKEN_12 || 'your_remarked_event_token', // Инициализируем токен мероприятий
   rocketDataApiUrl: process.env.ROCKETDATA_API_URL || 'https://api.rocketdata.io',
   rocketDataToken: process.env.ROCKETDATA_API_KEY || 'your_rocketdata_api_key',
+  iikoApiUrl: process.env.IIKO_API_URL || 'https://api-ru.iiko.services',
+  iikoToken: process.env.IIKO_TOKEN || 'your_iiko_api_login_token',
 };
 
 export default config;

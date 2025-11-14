@@ -4,8 +4,9 @@ export interface SendReviewPayload {
   rating: number; // Оценка отзыва: от 1 до 5.
   author: string; // Имя автора отзыва (например, пользователя Telegram).
   company_id: number; // Идентификатор компании в системе RocketData, к которой относится отзыв.
-  brand_id?: number; // Опциональный идентификатор бренда в системе RocketData.
-  catalog_id?: number; // Идентификатор каталога в системе RocketData.
+  brand_id: number; // Обязательный идентификатор бренда в системе RocketData.
+  catalog_id: number; // Обязательный идентификатор каталога в системе RocketData.
+  restaurant_id?: number; // Опциональный идентификатор ресторана для динамической подстановки.
   origin_url?: string; // Опциональная ссылка на источник отзыва (например, URL сообщения в Telegram).
   creation_time?: string; // Опциональная дата и время создания отзыва (в формате ISO 8601, например '2025-10-14T10:30:00Z').
   phone?: string; // Опциональный номер телефона клиента.

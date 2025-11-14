@@ -11,29 +11,36 @@ class RocketDataService {
   }
 
   public async sendReview(payload: SendReviewPayload): Promise<SendReviewResponse | false> {
-    const { comment, rating, author, company_id, brand_id, catalog_id, origin_url, creation_time, phone, user_fields_email, tags, notes } = payload;
+    let { comment, rating, author, company_id, brand_id, catalog_id, restaurant_id, origin_url, creation_time, phone, user_fields_email, tags, notes } = payload;
+
+    // Динамическая подстановка company_id, brand_id, catalog_id, если restaurant_id = 12
+    if (restaurant_id === 12) {
+      company_id = 3895167;
+      brand_id = 472760;
+      catalog_id = 479;
+    }
 
     const reviewPayload: any = {
       comment: comment,
       rating: rating,
       author: author,
       company_id: company_id,
+      brand_id: brand_id,   // Теперь обязательное поле
+      catalog_id: catalog_id, // Теперь обязательное поле
     };
 
-    if (brand_id) reviewPayload.brand_id = brand_id;
-    if (catalog_id) reviewPayload.catalog_id = catalog_id;
     if (origin_url) reviewPayload.origin_url = origin_url;
     if (creation_time) reviewPayload.creation_time = creation_time;
     if (phone) reviewPayload.phone = phone;
 
-    // Обработка tags как массива объектов
+    // Если tags существует и не пуст, добавляем его
     if (tags && tags.length > 0) {
       reviewPayload.tags = tags;
     } else {
       reviewPayload.tags = []; // Убедимся, что это всегда массив, если не предоставлен
     }
 
-    // Обработка notes как массива объектов
+    // Если notes существует и не пуст, добавляем его
     if (notes && notes.length > 0) {
       reviewPayload.notes = notes;
     } else {
