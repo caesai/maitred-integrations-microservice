@@ -8,6 +8,7 @@ import {
   IikoMenuByIdPayload,
   IikoMenuByIdResponse,
   GetIikoMenuPayload,
+  IikoMenuResponse,
   IikoOrganization,
   IikoExternalMenu
 } from '../interfaces/iiko';
@@ -214,9 +215,7 @@ class IikoService {
     return this.getMenuByIdWithHttps(payload, token);
   }
 
-  public async getMenuForRestaurant(payload: GetIikoMenuPayload): Promise<IikoMenuByIdResponse | false> {
-    const { restaurant_id } = payload;
-
+  private async getMenuForSingleRestaurant(restaurant_id: number): Promise<IikoMenuResponse> {
     // First, try to use hardcoded mapping if available
     const mapping = this.restaurantIikoMap[restaurant_id];
 
@@ -225,22 +224,41 @@ class IikoService {
         externalMenuId: mapping.externalMenuId,
         organizationIds: [mapping.organizationId],
       };
-      return this.getMenuById(menuPayload);
+      const menu = await this.getMenuById(menuPayload);
+      
+      if (menu === false) {
+        return {
+          restaurant_id,
+          menu: null,
+          error: 'Failed to retrieve menu from iiko API',
+        };
+      }
+      
+      return {
+        restaurant_id,
+        menu,
+      };
     }
 
     // If no mapping, try to get dynamically
     // Get organizations
     const organizations = await this.getOrganizations();
     if (!organizations || organizations.length === 0) {
-      console.error('No organizations found in iiko');
-      return false;
+      return {
+        restaurant_id,
+        menu: null,
+        error: 'No organizations found in iiko',
+      };
     }
 
     // Get external menus
     const externalMenus = await this.getExternalMenus();
     if (!externalMenus || externalMenus.length === 0) {
-      console.error('No external menus found in iiko');
-      return false;
+      return {
+        restaurant_id,
+        menu: null,
+        error: 'No external menus found in iiko',
+      };
     }
 
     // Use the first organization and first external menu
@@ -252,7 +270,36 @@ class IikoService {
       organizationIds: [organizationId],
     };
 
-    return this.getMenuById(menuPayload);
+    const menu = await this.getMenuById(menuPayload);
+    
+    if (menu === false) {
+      return {
+        restaurant_id,
+        menu: null,
+        error: 'Failed to retrieve menu from iiko API',
+      };
+    }
+    
+    return {
+      restaurant_id,
+      menu,
+    };
+  }
+
+  public async getMenuForRestaurants(payload: GetIikoMenuPayload): Promise<IikoMenuResponse[]> {
+    const { restaurant_ids } = payload;
+
+    // Validate that restaurant_ids is provided and is an array
+    if (!restaurant_ids || !Array.isArray(restaurant_ids) || restaurant_ids.length === 0) {
+      throw new Error('restaurant_ids must be a non-empty array');
+    }
+
+    // Process all restaurant_ids in parallel
+    const menuPromises = restaurant_ids.map(restaurant_id => 
+      this.getMenuForSingleRestaurant(restaurant_id)
+    );
+
+    return Promise.all(menuPromises);
   }
 }
 

@@ -136,5 +136,11 @@ export interface IikoMenuByIdResponse {
 }
 
 export interface GetIikoMenuPayload {
+  restaurant_ids: number[];
+}
+
+export interface IikoMenuResponse {
   restaurant_id: number;
+  menu: IikoMenuByIdResponse | null;
+  error?: string;
 }
