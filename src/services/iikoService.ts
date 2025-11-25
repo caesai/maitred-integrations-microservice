@@ -19,10 +19,19 @@ class IikoService {
   private accessToken: string | null = null;
   private tokenExpiryTime: number = 0; // Timestamp when the token expires
 
-  // Hardcoded mapping for restaurant_id to iiko organizationId and externalMenuId
+  // Mapping for restaurant_id to iiko organizationId and externalMenuId
+  // Based on the provided restaurant list and external menus
   private restaurantIikoMap: Record<number, { organizationId: string; externalMenuId: string; }> = {
-    2: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '62269' }, // Example for restaurant_id 2 (Poly)
-    // Add other mappings here as needed
+    1: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64705' }, // Blackchops
+    2: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '62269' }, // Poly
+    3: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64677' }, // Trappist
+    4: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64801' }, // Self Edge Japanese СПб
+    5: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64678' }, // Pame
+    6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65502' }, // Smoke BBQ Рубинштейна
+    7: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64691' }, // Self Edge Japanese Екб
+    10: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64719' }, // Self Edge Japanese Москва
+    11: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64690' }, // Smoke BBQ Лодейнопольская
+    // Note: restaurant_id 9 (Smoke BBQ Москва) and 12 (Тест 12) don't have corresponding external menus yet
   };
 
   constructor(iikoApiUrl: string, iikoApiLogin: string) {
@@ -240,49 +249,11 @@ class IikoService {
       };
     }
 
-    // If no mapping, try to get dynamically
-    // Get organizations
-    const organizations = await this.getOrganizations();
-    if (!organizations || organizations.length === 0) {
-      return {
-        restaurant_id,
-        menu: null,
-        error: 'No organizations found in iiko',
-      };
-    }
-
-    // Get external menus
-    const externalMenus = await this.getExternalMenus();
-    if (!externalMenus || externalMenus.length === 0) {
-      return {
-        restaurant_id,
-        menu: null,
-        error: 'No external menus found in iiko',
-      };
-    }
-
-    // Use the first organization and first external menu
-    const organizationId = organizations[0].id;
-    const externalMenuId = externalMenus[0].id;
-
-    const menuPayload: IikoMenuByIdPayload = {
-      externalMenuId: externalMenuId,
-      organizationIds: [organizationId],
-    };
-
-    const menu = await this.getMenuById(menuPayload);
-    
-    if (menu === false) {
-      return {
-        restaurant_id,
-        menu: null,
-        error: 'Failed to retrieve menu from iiko API',
-      };
-    }
-    
+    // If no mapping found, return error
     return {
       restaurant_id,
-      menu,
+      menu: null,
+      error: `No mapping found for restaurant_id ${restaurant_id}. Please add it to restaurantIikoMap.`,
     };
   }
 
