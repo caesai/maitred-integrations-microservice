@@ -29,9 +29,10 @@ class IikoService {
     5: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64678' }, // Pame
     6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65502' }, // Smoke BBQ Рубинштейна
     7: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64691' }, // Self Edge Japanese Екб
+    9: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65502' }, // Smoke BBQ Москва (используем то же меню, что и для Smoke BBQ Рубинштейна)
     10: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64719' }, // Self Edge Japanese Москва
     11: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64690' }, // Smoke BBQ Лодейнопольская
-    // Note: restaurant_id 9 (Smoke BBQ Москва) and 12 (Тест 12) don't have corresponding external menus yet
+    // Note: restaurant_id 12 (Тест 12) doesn't have corresponding external menu yet
   };
 
   constructor(iikoApiUrl: string, iikoApiLogin: string) {

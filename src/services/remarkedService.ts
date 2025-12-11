@@ -295,24 +295,53 @@ class RemarkedService {
   public async holdTickets(payload: HoldTicketsPayload): Promise<HoldTicketsResponse | false> {
     const token = this.getToken(payload.restaurant_id, true); // Передаем true для isEvent
     try {
-      const response = await fetch(`${this.remarkedApiV2BookingUrl}/holdTickets`, { // Используем remarkedApiV2BookingUrl
+      // Убираем restaurant_id из payload, так как он используется только для получения токена
+      const { restaurant_id, ...apiPayload } = payload;
+      const requestBody = JSON.stringify(apiPayload);
+      const url = `${this.remarkedApiV2BookingUrl}/holdTickets`;
+      
+      console.log('holdTickets Request URL:', url);
+      console.log('holdTickets Request Payload:', requestBody);
+      console.log('holdTickets Token:', token ? 'Token present' : 'Token missing');
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: requestBody,
       });
 
-      const json_resp = await response.json() as HoldTicketsResponse;
-      if (response.status !== 200) {
-        console.error('Error in RemarkedService.holdTickets:', json_resp);
+      const responseText = await response.text();
+      
+      if (!response.ok) {
+        // Если статус не 200, пытаемся распарсить как объект с ошибкой
+        let errorResponse: any;
+        try {
+          errorResponse = JSON.parse(responseText);
+        } catch {
+          errorResponse = { error: responseText || 'Unknown error' };
+        }
+        console.error('Error in RemarkedService.holdTickets (non-2xx status):', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorResponse
+        });
         return false;
       }
-      return json_resp;
+
+      // Если статус 200, парсим как успешный ответ
+      try {
+        const json_resp = JSON.parse(responseText) as HoldTicketsResponse;
+        return json_resp;
+      } catch (jsonError: any) {
+        console.error('Error parsing holdTickets response as JSON:', jsonError.message, 'Raw response:', responseText);
+        return false;
+      }
     } catch (error: any) {
       console.error('Error in RemarkedService.holdTickets:', error.message);
-      throw error;
+      return false;
     }
   }
 }
