@@ -20,18 +20,18 @@ class IikoService {
   private tokenExpiryTime: number = 0; // Timestamp when the token expires
 
   // Mapping for restaurant_id to iiko organizationId and externalMenuId
-  // Based on the provided restaurant list and external menus
+  // Based on the actual external menus from iiko API
   private restaurantIikoMap: Record<number, { organizationId: string; externalMenuId: string; }> = {
     1: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64705' }, // Blackchops
     2: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '62269' }, // Poly
-    3: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64677' }, // Trappist
-    4: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64801' }, // Self Edge Japanese СПб
+    3: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64677' }, // Траппист - Санкт-Петербург
+    4: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64801' }, // Self Edge Japanese - Санкт-петербург
     5: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64678' }, // Pame
-    6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65502' }, // Smoke BBQ Рубинштейна
-    7: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64691' }, // Self Edge Japanese Екб
-    9: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65502' }, // Smoke BBQ Москва (используем то же меню, что и для Smoke BBQ Рубинштейна)
-    10: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64719' }, // Self Edge Japanese Москва
-    11: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64690' }, // Smoke BBQ Лодейнопольская
+    6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '67386' }, // Smoke BBQ - Рубинштейна
+    7: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64691' }, // Self Edge Japanese - Екатеринбург
+    9: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65653' }, // Smoke BBQ - Трубная (Москва)
+    10: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64719' }, // Self Edge Japanese - Москва
+    11: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64690' }, // Smoke BBQ - Лодейнопольская
     // Note: restaurant_id 12 (Тест 12) doesn't have corresponding external menu yet
   };
 
@@ -176,6 +176,8 @@ class IikoService {
     return new Promise((resolve) => {
       const data = JSON.stringify(payload);
       
+      console.log('getMenuById Request Payload:', data);
+      
       const options: https.RequestOptions = {
         hostname: 'api-ru.iiko.services',
         path: '/api/2/menu/by_id',
@@ -194,6 +196,13 @@ class IikoService {
         res.on('end', () => {
           if (res.statusCode !== 200) {
             console.error('Error in IikoService.getMenuById - non-200 status:', res.statusCode);
+            console.error('iiko API Response Body:', body);
+            try {
+              const errorResponse = JSON.parse(body);
+              console.error('iiko API Error Response:', errorResponse);
+            } catch {
+              console.error('iiko API Raw Error Response:', body);
+            }
             resolve(false);
             return;
           }
@@ -203,6 +212,7 @@ class IikoService {
             resolve(json_resp);
           } catch (jsonError: any) {
             console.error('Error parsing iiko menu by ID response:', jsonError.message);
+            console.error('Raw response body:', body);
             resolve(false);
           }
         });
@@ -230,6 +240,11 @@ class IikoService {
     const mapping = this.restaurantIikoMap[restaurant_id];
 
     if (mapping) {
+      console.log(`Getting menu for restaurant_id ${restaurant_id}:`, {
+        externalMenuId: mapping.externalMenuId,
+        organizationId: mapping.organizationId
+      });
+      
       const menuPayload: IikoMenuByIdPayload = {
         externalMenuId: mapping.externalMenuId,
         organizationIds: [mapping.organizationId],
