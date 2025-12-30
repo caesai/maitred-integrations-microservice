@@ -136,10 +136,21 @@ class RemarkedService {
     
     // First, try to use table_bundles_with_count if available
     if (selectedSlot.table_bundles_with_count) {
-      // Find bundle that matches guests_count exactly
-      const matchingBundle = Object.values(selectedSlot.table_bundles_with_count).find(
+      // First, try to find bundle that matches guests_count exactly
+      let matchingBundle = Object.values(selectedSlot.table_bundles_with_count).find(
         (bundle: any) => bundle.count === payload.guests_count
       );
+      
+      // If no exact match, find the smallest bundle that can accommodate guests_count
+      if (!matchingBundle) {
+        const suitableBundles = Object.values(selectedSlot.table_bundles_with_count)
+          .filter((bundle: any) => bundle.count >= payload.guests_count)
+          .sort((a: any, b: any) => a.count - b.count); // Sort by count ascending
+        
+        if (suitableBundles.length > 0) {
+          matchingBundle = suitableBundles[0]; // Take the smallest suitable bundle
+        }
+      }
       
       if (matchingBundle) {
         table_ids_to_book = matchingBundle.table;
