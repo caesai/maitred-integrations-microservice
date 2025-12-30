@@ -62,7 +62,6 @@ class IikoService {
       const responseText = await response.text();
 
       if (!response.ok) {
-        console.error('Error in IikoService.getAccessToken (non-2xx status):', responseText);
         return false;
       }
 
@@ -70,7 +69,6 @@ class IikoService {
       try {
         json_resp = JSON.parse(responseText) as IikoAccessTokenResponse;
       } catch (jsonError: any) {
-        console.error('Error parsing iiko access token response as JSON:', jsonError.message, 'Raw response:', responseText);
         return false;
       }
 
@@ -80,11 +78,9 @@ class IikoService {
         this.tokenExpiryTime = Date.now() + 3600 * 1000 - (5 * 60 * 1000); // 5 minutes buffer
         return this.accessToken;
       } else {
-        console.error('Error getting iiko access token:', json_resp);
         return false;
       }
     } catch (error: any) {
-      console.error('Error in IikoService.getAccessToken:', error.message);
       return false;
     }
   }
@@ -106,7 +102,6 @@ class IikoService {
       const responseText = await response.text();
 
       if (!response.ok) {
-        console.error('Error in IikoService.getOrganizations (non-2xx status):', responseText);
         return false;
       }
 
@@ -114,18 +109,15 @@ class IikoService {
       try {
         json_resp = JSON.parse(responseText) as IikoOrganizationsResponse;
       } catch (jsonError: any) {
-        console.error('Error parsing iiko organizations response as JSON:', jsonError.message, 'Raw response:', responseText);
         return false;
       }
 
       if (json_resp.organizations) {
         return json_resp.organizations;
       } else {
-        console.error('Error getting iiko organizations:', json_resp);
         return false;
       }
     } catch (error: any) {
-      console.error('Error in IikoService.getOrganizations:', error.message);
       return false;
     }
   }
@@ -147,7 +139,6 @@ class IikoService {
       const responseText = await response.text();
 
       if (!response.ok) {
-        console.error('Error in IikoService.getExternalMenus (non-2xx status):', responseText);
         return false;
       }
 
@@ -155,18 +146,15 @@ class IikoService {
       try {
         json_resp = JSON.parse(responseText) as IikoExternalMenusResponse;
       } catch (jsonError: any) {
-        console.error('Error parsing iiko external menus response as JSON:', jsonError.message, 'Raw response:', responseText);
         return false;
       }
 
       if (json_resp.externalMenus) {
         return json_resp.externalMenus;
       } else {
-        console.error('Error getting iiko external menus:', json_resp);
         return false;
       }
     } catch (error: any) {
-      console.error('Error in IikoService.getExternalMenus:', error.message);
       return false;
     }
   }
@@ -175,8 +163,6 @@ class IikoService {
   private getMenuByIdWithHttps(payload: IikoMenuByIdPayload, token: string): Promise<IikoMenuByIdResponse | false> {
     return new Promise((resolve) => {
       const data = JSON.stringify(payload);
-      
-      console.log('getMenuById Request Payload:', data);
       
       const options: https.RequestOptions = {
         hostname: 'api-ru.iiko.services',
@@ -195,14 +181,6 @@ class IikoService {
         res.on('data', (chunk) => (body += chunk));
         res.on('end', () => {
           if (res.statusCode !== 200) {
-            console.error('Error in IikoService.getMenuById - non-200 status:', res.statusCode);
-            console.error('iiko API Response Body:', body);
-            try {
-              const errorResponse = JSON.parse(body);
-              console.error('iiko API Error Response:', errorResponse);
-            } catch {
-              console.error('iiko API Raw Error Response:', body);
-            }
             resolve(false);
             return;
           }
@@ -211,15 +189,12 @@ class IikoService {
             const json_resp = JSON.parse(body) as IikoMenuByIdResponse;
             resolve(json_resp);
           } catch (jsonError: any) {
-            console.error('Error parsing iiko menu by ID response:', jsonError.message);
-            console.error('Raw response body:', body);
             resolve(false);
           }
         });
       });
 
       req.on('error', (err) => {
-        console.error('Request error in getMenuById:', err.message);
         resolve(false);
       });
 
@@ -240,11 +215,6 @@ class IikoService {
     const mapping = this.restaurantIikoMap[restaurant_id];
 
     if (mapping) {
-      console.log(`Getting menu for restaurant_id ${restaurant_id}:`, {
-        externalMenuId: mapping.externalMenuId,
-        organizationId: mapping.organizationId
-      });
-      
       const menuPayload: IikoMenuByIdPayload = {
         externalMenuId: mapping.externalMenuId,
         organizationIds: [mapping.organizationId],

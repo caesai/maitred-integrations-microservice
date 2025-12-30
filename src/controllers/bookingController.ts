@@ -11,9 +11,16 @@ import {
 } from '../interfaces/booking';
 
 class BookingController {
-  public async createReserve(request: FastifyRequest<{ Body: Omit<CreateReservePayload, 'table_ids'> }>, reply: FastifyReply): Promise<void> {
+  public async createReserve(request: FastifyRequest<{ Body: Omit<CreateReservePayload, 'table_ids'> & { restaurantId?: number } }>, reply: FastifyReply): Promise<void> {
     try {
-      const result = await remarkedService.createReserve(request.body);
+      // Поддержка camelCase (restaurantId) и snake_case (restaurant_id)
+      const body = request.body as any;
+      const normalizedBody: Omit<CreateReservePayload, 'table_ids'> = {
+        ...body,
+        restaurant_id: body.restaurant_id ?? body.restaurantId,
+      };
+      
+      const result = await remarkedService.createReserve(normalizedBody);
       if (result) {
         reply.send(result);
       } else {

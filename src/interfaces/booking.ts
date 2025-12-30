@@ -33,6 +33,7 @@ export interface RemarkedSlot {
   tables_count?: number;
   tables_ids?: number[];
   table_bundles?: any[];
+  table_bundles_with_count?: Record<string, { count: number; table: number[] }>;
   isEvent: boolean; // New field
 }
 

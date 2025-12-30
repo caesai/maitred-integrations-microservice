@@ -41,7 +41,6 @@ class RemarkedService {
         return config.remarkedEventToken;
       } else {
         // Заглушка для других restaurant_id при isEvent: true
-        console.warn(`Использование заглушки токена для мероприятий для restaurant_id: ${targetRestaurantId}.`);
         return 'dummy_event_token_for_other_restaurants';
       }
     }
@@ -75,29 +74,97 @@ class RemarkedService {
     } else if (slotsResult && slotsResult.slots) {
       availableSlots = slotsResult.slots;
     } else {
-      console.error('Неверный формат ответа от getSlots.');
       return false;
     }
 
     if (availableSlots.length === 0) {
-      console.error('No available slots found for the specified criteria.');
       return false;
     }
 
-    let selectedTableId: number | undefined;
+    // Find the slot that matches the requested time
+    // payload.time format: "HH:MM:SS" or "HH:MM"
+    // slot.start_datetime format: "YYYY-MM-DD HH:MM:SS"
+    const requestedTime = payload.time.trim();
+    // Normalize requested time to HH:MM format for comparison
+    const requestedTimeNormalized = requestedTime.length === 5 ? requestedTime : requestedTime.substring(0, 5);
+    
+    let selectedSlot: RemarkedSlot | undefined;
+    
     for (const slot of availableSlots) {
-      if (slot.tables_ids && slot.tables_ids.length > 0) {
-        selectedTableId = slot.tables_ids[0];
-        break; // Found a slot with table_ids, break the loop
+      if (!slot.is_free) {
+        continue;
+      }
+      
+      // Extract time from start_datetime (format: "YYYY-MM-DD HH:MM:SS")
+      const slotTime = slot.start_datetime.split(' ')[1] || '';
+      const slotTimeNormalized = slotTime.substring(0, 5); // Get HH:MM format
+      
+      // Check if the slot time matches the requested time (compare HH:MM)
+      if (slotTimeNormalized === requestedTimeNormalized) {
+        selectedSlot = slot;
+        break;
       }
     }
 
-    if (selectedTableId === undefined) {
-      console.error('No available slot with specific tables_ids found for booking.');
+    // If no exact match found, check if the requested time slot exists but is not free
+    if (!selectedSlot) {
+      const requestedSlotExists = availableSlots.some(slot => {
+        const slotTime = slot.start_datetime.split(' ')[1] || '';
+        const slotTimeNormalized = slotTime.substring(0, 5);
+        return slotTimeNormalized === requestedTimeNormalized;
+      });
+      
+      if (requestedSlotExists) {
+        return false;
+      }
+      
+      // If slot doesn't exist at all, try to find the closest available slot
+      for (const slot of availableSlots) {
+        if (slot.is_free) {
+          selectedSlot = slot;
+          break;
+        }
+      }
+    }
+
+    if (!selectedSlot || !selectedSlot.is_free) {
       return false;
     }
 
-    const table_ids_to_book = [selectedTableId]; // Take the first table ID from the selected slot
+    // Choose the best table bundle for the requested guests_count
+    let table_ids_to_book: number[] = [];
+    
+    // First, try to use table_bundles_with_count if available
+    if (selectedSlot.table_bundles_with_count) {
+      // Find bundle that matches guests_count exactly
+      const matchingBundle = Object.values(selectedSlot.table_bundles_with_count).find(
+        (bundle: any) => bundle.count === payload.guests_count
+      );
+      
+      if (matchingBundle) {
+        table_ids_to_book = matchingBundle.table;
+      }
+    }
+    
+    // If no matching bundle found, try table_bundles
+    if (table_ids_to_book.length === 0 && selectedSlot.table_bundles && selectedSlot.table_bundles.length > 0) {
+      // Find the first bundle that has enough tables for guests_count
+      for (const bundle of selectedSlot.table_bundles) {
+        if (Array.isArray(bundle) && bundle.length > 0) {
+          table_ids_to_book = bundle;
+          break;
+        }
+      }
+    }
+    
+    // Fallback to tables_ids if no bundles available
+    if (table_ids_to_book.length === 0 && selectedSlot.tables_ids && selectedSlot.tables_ids.length > 0) {
+      table_ids_to_book = selectedSlot.tables_ids;
+    }
+
+    if (table_ids_to_book.length === 0) {
+      return false;
+    }
 
     const fullPayload = {
       method: 'CreateReserve',
@@ -131,11 +198,9 @@ class RemarkedService {
           table_ids: table_ids_to_book, // Добавляем table_ids
         };
       } else {
-        console.error('Error in RemarkedService.createReserve:', json_resp);
         return false;
       }
     } catch (error: any) {
-      console.error('Error in RemarkedService.createReserve:', error.message);
       throw error;
     }
   }
@@ -165,10 +230,16 @@ class RemarkedService {
         body: JSON.stringify(fullPayload),
       });
 
-      const json_resp = await response.json() as GetSlotsResponse;
+      const responseText = await response.text();
+
+      let json_resp: GetSlotsResponse;
+      try {
+        json_resp = JSON.parse(responseText) as GetSlotsResponse;
+      } catch (parseError: any) {
+        return [];
+      }
 
       if (json_resp.status === 'error') {
-        console.error('Error in RemarkedService.getSlots:', json_resp);
         return []; // Возвращаем пустой массив слотов при ошибке
       }
       
@@ -181,7 +252,6 @@ class RemarkedService {
         return slots.filter(slot => slot.is_free);
       }
     } catch (error: any) {
-      console.error('Error in RemarkedService.getSlots:', error.message);
       throw error;
     }
   }
@@ -209,7 +279,6 @@ class RemarkedService {
 
       const json_resp: any = await response.json();
       if (json_resp.status === 'error') {
-        console.error('RemoveReserve error:', json_resp);
         return false;
       } else {
         return {
@@ -218,7 +287,6 @@ class RemarkedService {
         };
       }
     } catch (error: any) {
-      console.error('Error in RemarkedService.removeReserve:', error.message);
       throw error;
     }
   }
@@ -241,7 +309,6 @@ class RemarkedService {
       }
       return json_resp;
     } catch (error: any) {
-      console.error('Error in RemarkedService.buyTicket:', error.message);
       throw error;
     }
   }
@@ -264,7 +331,6 @@ class RemarkedService {
       }
       return json_resp;
     } catch (error: any) {
-      console.error('Error in RemarkedService.checkPayment:', error.message);
       throw error;
     }
   }
@@ -282,12 +348,10 @@ class RemarkedService {
 
       const json_resp = await response.json() as GetEventsResponse;
       if (response.status !== 200 || json_resp.events === undefined) {
-        console.error('Error in RemarkedService.getEvents:', json_resp);
         return false;
       }
       return json_resp.events;
     } catch (error: any) {
-      console.error('Error in RemarkedService.getEvents:', error.message);
       throw error;
     }
   }
@@ -299,10 +363,6 @@ class RemarkedService {
       const { restaurant_id, ...apiPayload } = payload;
       const requestBody = JSON.stringify(apiPayload);
       const url = `${this.remarkedApiV2BookingUrl}/holdTickets`;
-      
-      console.log('holdTickets Request URL:', url);
-      console.log('holdTickets Request Payload:', requestBody);
-      console.log('holdTickets Token:', token ? 'Token present' : 'Token missing');
       
       const response = await fetch(url, {
         method: 'POST',
@@ -323,11 +383,6 @@ class RemarkedService {
         } catch {
           errorResponse = { error: responseText || 'Unknown error' };
         }
-        console.error('Error in RemarkedService.holdTickets (non-2xx status):', {
-          status: response.status,
-          statusText: response.statusText,
-          body: errorResponse
-        });
         return false;
       }
 
@@ -336,11 +391,9 @@ class RemarkedService {
         const json_resp = JSON.parse(responseText) as HoldTicketsResponse;
         return json_resp;
       } catch (jsonError: any) {
-        console.error('Error parsing holdTickets response as JSON:', jsonError.message, 'Raw response:', responseText);
         return false;
       }
     } catch (error: any) {
-      console.error('Error in RemarkedService.holdTickets:', error.message);
       return false;
     }
   }
