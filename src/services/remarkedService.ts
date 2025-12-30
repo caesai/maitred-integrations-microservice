@@ -58,12 +58,13 @@ class RemarkedService {
     const token = this.getToken(payload.restaurant_id);
 
     // 1. Get available slots for the given date, time, and guests_count
+    // Используем with_rooms: true чтобы получить полную информацию о table_bundles_with_count
     const slotsPayload: GetSlotsPayload = {
       restaurant_id: payload.restaurant_id,
       reserve_from: payload.date,
       reserve_to: payload.date,
       guests_count: payload.guests_count,
-      with_rooms: false, // Устанавливаем в false, так как для бронирования нужны только слоты
+      with_rooms: true, // Нужно true для получения table_bundles_with_count
     };
     const slotsResult = await this.getSlots(slotsPayload);
 
