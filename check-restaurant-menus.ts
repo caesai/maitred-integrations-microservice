@@ -13,7 +13,7 @@ const restaurantMap: Record<number, { name: string; externalMenuId: string; orga
   3: { name: 'Trappist', externalMenuId: '64677', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
   4: { name: 'Self Edge Japanese СПб', externalMenuId: '64801', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
   5: { name: 'Pame', externalMenuId: '64678', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
-  6: { name: 'Smoke BBQ Рубинштейна', externalMenuId: '67386', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
+  6: { name: 'Smoke BBQ Рубинштейна', externalMenuId: '68647', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
   7: { name: 'Self Edge Japanese Екб', externalMenuId: '64691', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
   9: { name: 'Smoke BBQ Москва', externalMenuId: '65653', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },
   10: { name: 'Self Edge Japanese Москва', externalMenuId: '64719', organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9' },

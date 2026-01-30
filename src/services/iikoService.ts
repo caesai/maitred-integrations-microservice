@@ -27,7 +27,7 @@ class IikoService {
     3: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64677' }, // Траппист - Санкт-Петербург
     4: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64801' }, // Self Edge Japanese - Санкт-петербург
     5: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64678' }, // Pame
-    6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '67386' }, // Smoke BBQ - Рубинштейна
+    6: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '68647' }, // Smoke BBQ - Рубинштейна
     7: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64691' }, // Self Edge Japanese - Екатеринбург
     9: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '65653' }, // Smoke BBQ - Трубная (Москва)
     10: { organizationId: '21f5acd3-1db7-457d-b3cd-f0022a8001a9', externalMenuId: '64719' }, // Self Edge Japanese - Москва
